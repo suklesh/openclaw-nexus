@@ -572,6 +572,22 @@ function buildChatCommands(): ChatCommandDefinition[] {
         },
       ],
     }),
+    defineChatCommand({
+      key: "remember",
+      description: "Add a memory candidate to the per-session review queue.",
+      textAliases: ["/remember"],
+      acceptsArgs: true,
+      scope: "text",
+      category: "session",
+    }),
+    defineChatCommand({
+      key: "memory-review",
+      description: "Review memory candidates (keep/edit/discard/defer).",
+      textAliases: ["/memory-review", "/memoryreview"],
+      acceptsArgs: true,
+      scope: "text",
+      category: "session",
+    }),
     ...listChannelDocks()
       .filter((dock) => dock.capabilities.nativeCommands)
       .map((dock) => defineDockCommand(dock)),

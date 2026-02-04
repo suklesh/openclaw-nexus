@@ -39,6 +39,7 @@ import { SILENT_REPLY_TOKEN } from "../tokens.js";
 import { runReplyAgent } from "./agent-runner.js";
 import { applySessionHints } from "./body.js";
 import { buildGroupIntro } from "./groups.js";
+import { maybeNudgeMemoryReview } from "./memory-review.js";
 import { resolveQueueSettings } from "./queue.js";
 import { routeReply } from "./route-reply.js";
 import { ensureSkillSnapshot, prependSystemEvents } from "./session-updates.js";
@@ -167,6 +168,12 @@ export async function runPreparedReply(
     wasMentioned,
     isHeartbeat,
   });
+
+  // Epic 2: scheduled per-session memory review nudges.
+  // We run this on heartbeat turns so the system can ping you even without manual commands.
+  if (isHeartbeat) {
+    await maybeNudgeMemoryReview({ cfg, storePath, workspaceDir });
+  }
   const shouldInjectGroupIntro = Boolean(
     isGroupChat && (isFirstTurnInSession || sessionEntry?.groupActivationNeedsSystemIntro),
   );
@@ -221,7 +228,9 @@ export async function runPreparedReply(
 
   // Optional: sentiment-aware tone directive injection (token-cheap, deterministic).
   // Kept in the message body (not system prompt) to preserve system prompt caching.
-  const tone = await (await import("./tone-state.js")).prependToneDirective({
+  const tone = await (
+    await import("./tone-state.js")
+  ).prependToneDirective({
     cfg,
     sessionKey,
     storePath,
