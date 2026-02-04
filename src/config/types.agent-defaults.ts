@@ -158,6 +158,12 @@ export type AgentDefaultsConfig = {
   timeoutSeconds?: number;
   /** Max inbound media size in MB for agent-visible attachments (text note or future image attach). */
   mediaMaxMb?: number;
+
+  /** Optional sentiment-aware tone state injection into the message body (not the system prompt). */
+  toneState?: {
+    /** Enable tone state tracking + directive injection (default: false). */
+    enabled?: boolean;
+  };
   typingIntervalSeconds?: number;
   /** Typing indicator start mode (never|instant|thinking|message). */
   typingMode?: TypingMode;
