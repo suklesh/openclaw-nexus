@@ -93,6 +93,9 @@ export type SessionEntry = {
   lastThreadId?: string | number;
   skillsSnapshot?: SessionSkillSnapshot;
   systemPromptReport?: SessionSystemPromptReport;
+
+  /** Optional per-session memory review queue state (candidate → verdict loop). */
+  memoryReview?: unknown;
 };
 
 export function mergeSessionEntry(

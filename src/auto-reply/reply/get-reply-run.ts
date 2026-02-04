@@ -42,6 +42,7 @@ import { buildGroupIntro } from "./groups.js";
 import { resolveQueueSettings } from "./queue.js";
 import { routeReply } from "./route-reply.js";
 import { ensureSkillSnapshot, prependSystemEvents } from "./session-updates.js";
+import { maybeNudgeMemoryReview } from "./memory-review.js";
 import { resolveTypingMode } from "./typing-mode.js";
 
 type AgentDefaults = NonNullable<OpenClawConfig["agents"]>["defaults"];
@@ -167,6 +168,12 @@ export async function runPreparedReply(
     wasMentioned,
     isHeartbeat,
   });
+
+  // Epic 2: scheduled per-session memory review nudges.
+  // We run this on heartbeat turns so the system can ping you even without manual commands.
+  if (isHeartbeat) {
+    await maybeNudgeMemoryReview({ cfg, storePath, workspaceDir });
+  }
   const shouldInjectGroupIntro = Boolean(
     isGroupChat && (isFirstTurnInSession || sessionEntry?.groupActivationNeedsSystemIntro),
   );
