@@ -39,7 +39,11 @@ import { SILENT_REPLY_TOKEN } from "../tokens.js";
 import { runReplyAgent } from "./agent-runner.js";
 import { applySessionHints } from "./body.js";
 import { buildGroupIntro } from "./groups.js";
-import { maybeNudgeMemoryReview } from "./memory-review.js";
+import {
+  extractExplicitMemoryCandidates,
+  enqueueMemoryCandidate,
+  maybeNudgeMemoryReview,
+} from "./memory-review.js";
 import { resolveQueueSettings } from "./queue.js";
 import { routeReply } from "./route-reply.js";
 import { ensureSkillSnapshot, prependSystemEvents } from "./session-updates.js";
@@ -225,6 +229,25 @@ export async function runPreparedReply(
     abortKey: command.abortKey,
     messageId: sessionCtx.MessageSid,
   });
+
+  // Epic 2 MVP: explicit user-driven memory capture.
+  // If the user includes lines like `remember: ...`, enqueue them as memory candidates
+  // for later KEEP/EDIT/DISCARD/DEFER review.
+  if (!isHeartbeat && storePath) {
+    const candidates = extractExplicitMemoryCandidates({ body: baseBodyFinal });
+    for (const text of candidates) {
+      try {
+        await enqueueMemoryCandidate({
+          storePath,
+          sessionKey,
+          text,
+          sourceMessageId: sessionCtx.MessageSid,
+        });
+      } catch {
+        // Best-effort: never fail the reply run because memory capture couldn't persist.
+      }
+    }
+  }
 
   // Optional: sentiment-aware tone directive injection (token-cheap, deterministic).
   // Kept in the message body (not system prompt) to preserve system prompt caching.
