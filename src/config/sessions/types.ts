@@ -96,6 +96,9 @@ export type SessionEntry = {
 
   /** Optional per-session tone state for sentiment-aware style injection. */
   toneState?: unknown;
+
+  /** Optional per-session memory review queue state (candidate → verdict loop). */
+  memoryReview?: unknown;
 };
 
 export function mergeSessionEntry(
