@@ -93,6 +93,9 @@ export type SessionEntry = {
   lastThreadId?: string | number;
   skillsSnapshot?: SessionSkillSnapshot;
   systemPromptReport?: SessionSystemPromptReport;
+
+  /** Optional per-session tone state for sentiment-aware style injection. */
+  toneState?: unknown;
 };
 
 export function mergeSessionEntry(

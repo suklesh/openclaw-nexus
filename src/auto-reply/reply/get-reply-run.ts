@@ -218,6 +218,20 @@ export async function runPreparedReply(
     abortKey: command.abortKey,
     messageId: sessionCtx.MessageSid,
   });
+
+  // Optional: sentiment-aware tone directive injection (token-cheap, deterministic).
+  // Kept in the message body (not system prompt) to preserve system prompt caching.
+  const tone = await (await import("./tone-state.js")).prependToneDirective({
+    cfg,
+    sessionKey,
+    storePath,
+    sessionEntry,
+    sessionStore,
+    body: prefixedBodyBase,
+  });
+  prefixedBodyBase = tone.body;
+  sessionEntry = tone.nextEntry ?? sessionEntry;
+
   const isGroupSession = sessionEntry?.chatType === "group" || sessionEntry?.chatType === "channel";
   const isMainSession = !isGroupSession && sessionKey === normalizeMainKey(sessionCfg?.mainKey);
   prefixedBodyBase = await prependSystemEvents({
