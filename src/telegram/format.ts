@@ -75,6 +75,34 @@ export function renderTelegramHtmlText(
   return markdownToTelegramHtml(text, { tableMode: options.tableMode });
 }
 
+function sanitizeTelegramPlainText(text: string): string {
+  if (!text) {
+    return text;
+  }
+  // Telegram plain-text fallback should not leak HTML-like wrapper tags that the model
+  // might emit (e.g. <details>, <summary>, <p>, <br/>). These tags are not supported
+  // by Telegram HTML mode anyway and look ugly when we fall back to plain text.
+  return (
+    text
+      // Normalize common HTML line breaks.
+      .replace(/<\s*br\s*\/?>/gi, "\n")
+      // Treat paragraph boundaries as newlines.
+      .replace(/<\s*\/\s*p\s*>/gi, "\n")
+      .replace(/<\s*p\b[^>]*>/gi, "")
+      // Remove collapsible wrappers.
+      .replace(/<\s*\/\s*details\s*>/gi, "")
+      .replace(/<\s*details\b[^>]*>/gi, "")
+      .replace(/<\s*\/\s*summary\s*>/gi, "")
+      .replace(/<\s*summary\b[^>]*>/gi, "")
+      // If we reached plain-text fallback, strip any other HTML-ish tags that would
+      // otherwise leak into the user-visible message (e.g. <span style="...">).
+      .replace(/<[^>]+>/g, "")
+      // Collapse excessive blank lines.
+      .replace(/\n{3,}/g, "\n\n")
+      .trim()
+  );
+}
+
 export function markdownToTelegramChunks(
   markdown: string,
   limit: number,
@@ -89,7 +117,7 @@ export function markdownToTelegramChunks(
   const chunks = chunkMarkdownIR(ir, limit);
   return chunks.map((chunk) => ({
     html: renderTelegramHtml(chunk),
-    text: chunk.text,
+    text: sanitizeTelegramPlainText(chunk.text),
   }));
 }
 
